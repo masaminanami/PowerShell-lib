@@ -21,6 +21,11 @@ class WebIO {
         log "WebIO: PerfornceMonitoring set: $($f ? 'Enabled' : 'Disabled')"
     }
 
+    Purge($limitDateTime) {
+        log "WebIO purging old cache: $($limitDateTime)"
+        Get-ChildItem -Path [WebIO]::CacheDir -File |? {$_.LastWriteTime -lt $limitDateTime } |Remove-Item -Force -Verbose:1
+    }
+
     [string] Load($url) {
         $fp = Join-Path ([WebIO]::CacheDir) $this.getCacheFilename($url)
         if (Test-Path $fp) {
@@ -32,9 +37,9 @@ class WebIO {
                 logv "Cache exist but old: LWT=$($fd.LastWriteTime) $fp"
             }
         } else {
-            logv "Cache does not exit: $url $fp"
+            logv "Cache does not exist: $url $fp"
         }
-        
+
         $retry = 3
         while ($retry) {
             try {
