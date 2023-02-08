@@ -69,7 +69,6 @@ class SharedMemory {
 
     SendString($s) {
         $bytes = $this.encoder.GetBytes($s)
-        log "sendString '$s', len=$($bytes.count)=($($bytes -join(', ')))"
         $this.drv.Write(2, [int16]$bytes.Count)
         $n = 4
         $bytes |%{ $this.drv.Write($n++, [byte]$_)}
@@ -81,7 +80,6 @@ class SharedMemory {
 
     [Object] Get() {
         [SharedMemoryTag]$t = $this.GetTag()
-        log "Get.Gettag: $t"
         switch ($t) {
             ([SharedMemoryTag]::Int32) {
                 $rc = $this.drv.ReadInt32(2);
@@ -104,7 +102,6 @@ class SharedMemory {
                 }
                 $this.SendAck()
                 $rc = $this.encoder.GetString($bytes)
-                log "getString: len=$len '$rc' ($($bytes -join(', '))))"
                 return ($t, [string]$rc)
             }
 
@@ -122,22 +119,20 @@ class SharedMemory {
 
     [SharedMemoryTag] GetTag() {
         while (($rc = $this.drv.ReadInt16(0)) -eq [SharedMemoryTag]::NoData) {
-            log "Waiting for next command..."
+            logv "Waiting for next command..."
             Start-Sleep -s 2
         }
-        log "getTag: $rc,$([SharedMemoryTag]$rc)"
         return [SharedMemoryTag]$rc
     }
 
     SendAck() {
-        log "sendack"
         $this.drv.Write(0, [int16][SharedMemoryTag]::NoData)
     }
 
     WaitAck() {
         $cnt = 0
         while (($t = $this.drv.ReadInt16(0)) -ne [SharedMemoryTag]::NoData) {
-            log "Waiting for receiver tag=$t,cnt=$cnt"
+            logv "Waiting for receiver tag=$t,cnt=$cnt"
             $cnt++
             Start-Sleep -s 1
         }
