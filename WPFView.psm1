@@ -4,7 +4,7 @@
 
 Add-Type -AssemblyName PresentationCore,PresentationFramework
 
-function New-WindowObject($r) { [System.Windows.Markup.XamlReader]::Load($reader) }
+function New-WindowObject($r) { [System.Windows.Markup.XamlReader]::Load($r) }
 
 class WPFView {
     $window;
