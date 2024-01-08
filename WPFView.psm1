@@ -6,12 +6,10 @@ Add-Type -AssemblyName PresentationCore,PresentationFramework
 
 function New-WindowObject($r) { [System.Windows.Markup.XamlReader]::Load($r) }
 
-$script:WPFView;
 class WPFView {
     $window;
 
     BaseInit($file) {
-        $script:WPFView = $this;
         $this.CreateWindow($file)
         $this.SetupControls()
     }
@@ -30,8 +28,12 @@ class WPFView {
     [Object] FindByName($n) { return $this.window.FindName($n) }
 
     Show() {
+        $me = "$($this.GetType().Name).Show:"
+        log "$me Starting window"
         $this.window.ShowDialog()
     }
+
+    [bool] GetResult() { return $this.window.DialogResult }
 
     CloseWindow() {
         $this.window.Close()
@@ -44,11 +46,13 @@ class WPFView {
     Init($file) { $this.BaseInit($file) }
 }
 
+$global:WPFResizableView;
 class WPFAutoResizableView : WPFView {
     [ResizeSpec]$ResizeSpec;
     [float]$FixedWidth;
 
     EnableAutoResize([ResizeSpec]$spec) {
+        $global:WPFResizableView = $this
         $this.ResizeSpec = $spec
         $this.FixedWidth = $spec.MarginWidth
         foreach ($e in $this.ResizeSpec.Specs) {
@@ -59,8 +63,9 @@ class WPFAutoResizableView : WPFView {
                 $this.FixedWidth += $e.Width
             }
         }
+        log "$($this.GetType().Name).EnableAutoResize initialized $this $($this.GetHashCode())"
 
-        $this.window.Add_SizeChanged({ $script:WPFView.ResizeColumns()} )
+        $this.window.Add_SizeChanged({ $global:WPFResizableView.ResizeColumns()} )
     }
 
     ResizeColumns() {
