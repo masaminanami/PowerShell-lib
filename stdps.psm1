@@ -9,9 +9,9 @@
 #--- RunMain
 # Initialize the log file and start class-based app by calling Run()
 #
-function RunApp($app, $logfile, $logGens = 3) {
+function RunApp($app, $logfile, $logGens = 3, $appendMode = $false) {
     checkArgs
-    initlog $logfile $logGens
+    initlog $logfile $logGens "utf8" $appendMode
     $app.Run()
     closelog
 }
@@ -34,7 +34,7 @@ $LogTimeFormat = 'yyyyMMdd-HHmmss'
 #
 # initlog --- initialize logging parameters (if logfile is specified)
 #
-function initlog($file, $gens, $encode="utf8") {
+function initlog($file, $gens, $encode="utf8", $appendMode=$false) {
     if ($file) {
         $script:logging_LogFileFP = [IO.Path]::GetFullPath($file)
         $script:logging_Encoding = $encode
@@ -52,14 +52,18 @@ function initlog($file, $gens, $encode="utf8") {
         } elseif ($script:LogTimeFormat -notmatch "\s$") {
             $script:LogTimeFormat += ' '
         }
-        if ($gens) { rotatelogs $script:logging_LogFileFP $gens }
-        Set-Content -Path $script:logging_LogFileFP -Value $null -Encoding $script:logging_Encoding
-        log "Logging started: $(Get-Date -Format $script:LogTimeFormat) $($script:logging_LogFileFP)"
+        if (-not $appendMode) {
+            if ($gens) { rotatelogs $script:logging_LogFileFP $gens }
+            Set-Content -Path $script:logging_LogFileFP -Value $null -Encoding $script:logging_Encoding
+            log "Logging started: $(Get-Date -Format $script:LogTimeFormat) $($script:logging_LogFileFP)"
+        } else {
+            log "Logging started in append mode: $(Get-Date -Format $script:LogTimeFormat) $($script:logging_LogFileFP)"
+        }
     } else {
         Write-Host "initlog: Logging is disabled as no log filename is specified."
     }
 }
-    
+
 #
 # locklog --- try to detect another process is running that uses the same log file
 #

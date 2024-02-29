@@ -66,4 +66,9 @@ class WebIO {
     [string] getCacheFilename($url) {
         return $url -replace '^[^:]+://','' -replace '/$','' -replace '[\./\?\&]','_'
     }
-}
+
+    [DateTime] GetLastUpdated($url) {
+        $fp = Join-Path ([WebIO]::CacheDir) $this.getCacheFilename($url)
+        return (Get-Item -LiteralPath $fp).LastWriteTime
+    }
+ }
